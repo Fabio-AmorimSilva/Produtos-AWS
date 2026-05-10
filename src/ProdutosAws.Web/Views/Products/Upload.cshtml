@@ -1,0 +1,16 @@
+﻿@model ProdutosAws.Application.Dtos.Products.UpdateProductImage
+
+@{
+    ViewBag.Title = "Update Product Image";
+    Layout = "_Layout";
+}
+
+<h2 class="d-flex justify-content-center">Upload Image</h2>
+
+<div class="d-flex justify-content-center">
+    <input class="form-control" type="text" hidden="hidden" asp-for="ProductId"/>
+    <form asp-action="Upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file"/>
+        <input type="submit" value="Upload"/>
+    </form>
+</div>

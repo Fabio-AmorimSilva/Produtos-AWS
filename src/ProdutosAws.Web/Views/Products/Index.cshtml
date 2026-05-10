@@ -1,0 +1,75 @@
+﻿@model IEnumerable<ProdutosAws.Application.Dtos.Products.ProductDto>
+
+@{
+    ViewBag.Title = "Products";
+    Layout = "_Layout";
+}
+
+<a asp-action="Create" class="btn btn-primary">Register Product</a>
+
+<h2>Products</h2>
+
+<table class="table table-striped">
+    <thead>
+    <th scope="col">#</th>
+    <th scope="col">Name</th>
+    <th scope="col">Category</th>
+    </thead>
+    <tbody>
+        @foreach (var product in Model)
+        {
+            <tr>
+                <th></th>
+                <td>@product.Name</td>
+                <td>@product.ProductCategory</td>
+                <td>
+                    <button type="button" class="btn btn-primary m-1" data-bs-toggle="modal" data-bs-target="#Modal_@product.Id">
+                        Details
+                    </button>
+                    <a class="btn btn-primary m-1" asp-controller="Products" asp-action="Update" asp-route-id="@product.Id">Edit</a>
+                    <a class="btn btn-primary m-1" asp-controller="Products" asp-action="Upload" asp-route-id="@product.Id">Upload Image</a>
+                    <a class="btn btn-primary m-1" asp-controller="Products" asp-action="GetImage" asp-route-id="@product.Id">Download Image</a>
+                    <button type="button" class="btn btn-primary m-1" data-bs-toggle="modal" data-bs-target="#Delete_@product.Id">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+            <div class="modal fade" id="Modal_@product.Id" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="exampleModalLabel">Information</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-center">Nome: @product.Name</p>
+                            <p class="text-center">Sobrenome: @product.ProductCategory</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="Delete_@product.Id" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="exampleModalLabel">Delete Product?</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-center">Nome: @product.Name</p>
+                            <p class="text-center">Sobrenome: @product.ProductCategory</p>
+                        </div>
+                        <div class="modal-footer">
+                            <form class="collapse-horizontal" method="post" asp-action="Delete" asp-route-id="@product.Id">
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </tbody>
+</table>

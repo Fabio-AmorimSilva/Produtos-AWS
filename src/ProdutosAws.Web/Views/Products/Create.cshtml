@@ -1,0 +1,32 @@
+﻿@model ProdutosAws.Application.Dtos.Products.CreateProductDto
+
+@{
+    ViewBag.Title = "Create Product";
+    Layout = "_Layout";
+}
+
+<h2 class="d-flex justify-content-center">Register</h2>
+
+<div class="d-flex justify-content-center">
+    <form method="post" action="Create">
+        <label class="form-label">Name:</label>
+        <input class="form-control mb-1" type="text" asp-for="Name" placeholder="Type name..."/>
+        <span asp-validation-for="Name" class="text-danger"></span>
+        <label class="form-control mb-1">Category</label>
+        <select class="form-select" asp-for="ProductCategory" aria-label="Category">
+            @foreach (var category in Enum.GetValues(typeof(ProductCategory)))
+            {
+                if (Model?.ProductCategory == (ProductCategory)category)
+                {
+                    <option value="@category" selected>@category</option>
+                }
+                else
+                {
+                    <option value="@category">@category</option>
+                }
+            }
+        </select>
+        <span asp-validation-for="ProductCategory" class="text-danger"></span>
+        <button class="btn btn-primary mt-2" type="submit">Register</button>
+    </form>
+</div>
