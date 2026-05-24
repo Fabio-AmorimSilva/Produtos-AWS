@@ -61,3 +61,7 @@ jobs:
           aws elasticbeanstalk update-environment \
             --environment-name ${{ env.EB_ENVIRONMENT_NAME }} \
             --version-label v-${{ github.sha }}
+          
+          aws elasticbeanstalk wait application-version-processed \
+                --application-name ${{ env.EB_APPLICATION_NAME }} \
+                --version-label v-${{ github.sha }}
