@@ -31,7 +31,7 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Publish project
-        run: dotnet publish ./ProdutosAws.Web/ProdutosAws.Web.csproj -c Release -o published --no-build
+        run: dotnet publish src/ProdutosAws.Web/ProdutosAws.Web.csproj -c Release -o published --no-build
 
       - name: Zip published files
         run: |
