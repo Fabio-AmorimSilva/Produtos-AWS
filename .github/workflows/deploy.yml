@@ -31,12 +31,29 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Publish project
-        run: dotnet publish src/ProdutosAws.Web/ProdutosAws.Web.csproj -c Release -o published --no-build
+        run: |
+          dotnet publish src/ProdutosAws.Web/ProdutosAws.Web.csproj \
+            -c Release \
+            -o published \
+            --no-build
 
-      - name: Zip published files
+      - name: Verify publish folder
+        run: |
+          echo "===== PUBLISHED FILES ====="
+          ls -la published
+
+      - name: Create deployment zip
         run: |
           cd published
           zip -r ../deploy.zip .
+
+      - name: Verify zip file
+        run: |
+          echo "===== ROOT FILES ====="
+          ls -la
+
+          echo "===== ZIP INFO ====="
+          unzip -l deploy.zip | head -30
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -45,20 +62,56 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Debug AWS Configuration
+        run: |
+          echo "===== AWS CONFIG ====="
+          echo "REGION=${{ env.AWS_REGION }}"
+          echo "APPLICATION=${{ env.EB_APPLICATION_NAME }}"
+          echo "ENVIRONMENT=${{ env.EB_ENVIRONMENT_NAME }}"
+          echo "BUCKET=${{ env.S3_BUCKET_DEPLOY }}"
+
+          echo "===== AWS CALLER ====="
+          aws sts get-caller-identity
+
       - name: Upload deploy package to S3
         run: |
           aws s3 cp deploy.zip s3://${{ env.S3_BUCKET_DEPLOY }}/deploy-${{ github.sha }}.zip
 
+      - name: Verify uploaded package
+        run: |
+          echo "===== S3 FILES ====="
+          aws s3 ls s3://${{ env.S3_BUCKET_DEPLOY }}/
+
+      - name: List Elastic Beanstalk applications
+        run: |
+          echo "===== ELASTIC BEANSTALK APPLICATIONS ====="
+          aws elasticbeanstalk describe-applications
+
       - name: Create Elastic Beanstalk application version
         run: |
           aws elasticbeanstalk create-application-version \
-            --application-name ${{ env.EB_APPLICATION_NAME }} \
-            --version-label v-${{ github.sha }} \
-            --source-bundle S3Bucket=${{ env.S3_BUCKET_DEPLOY }},S3Key=deploy-${{ github.sha }}.zip \
+            --application-name "${{ env.EB_APPLICATION_NAME }}" \
+            --version-label "v-${{ github.sha }}" \
+            --source-bundle S3Bucket="${{ env.S3_BUCKET_DEPLOY }}",S3Key="deploy-${{ github.sha }}.zip" \
             --process
+
+      - name: Wait for version propagation
+        run: sleep 20
+
+      - name: Describe application versions
+        run: |
+          echo "===== APPLICATION VERSIONS ====="
+          aws elasticbeanstalk describe-application-versions \
+            --application-name "${{ env.EB_APPLICATION_NAME }}"
 
       - name: Deploy to Elastic Beanstalk
         run: |
           aws elasticbeanstalk update-environment \
-            --environment-name ${{ env.EB_ENVIRONMENT_NAME }} \
-            --version-label v-${{ github.sha }}
+            --environment-name "${{ env.EB_ENVIRONMENT_NAME }}" \
+            --version-label "v-${{ github.sha }}"
+
+      - name: Get environment status
+        run: |
+          echo "===== ENVIRONMENT STATUS ====="
+          aws elasticbeanstalk describe-environments \
+            --environment-names "${{ env.EB_ENVIRONMENT_NAME }}"
