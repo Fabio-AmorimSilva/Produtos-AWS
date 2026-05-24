@@ -54,14 +54,17 @@ jobs:
           aws elasticbeanstalk create-application-version \
             --application-name ${{ env.EB_APPLICATION_NAME }} \
             --version-label v-${{ github.sha }} \
-            --source-bundle S3Bucket=${{ env.S3_BUCKET_DEPLOY }},S3Key=deploy-${{ github.sha }}.zip
+            --source-bundle S3Bucket=${{ env.S3_BUCKET_DEPLOY }},S3Key=deploy-${{ github.sha }}.zip \
+            --process
+
+      - name: Wait for application version processing
+        run: |
+          aws elasticbeanstalk wait application-version-processed \
+            --application-name ${{ env.EB_APPLICATION_NAME }} \
+            --version-label v-${{ github.sha }}
 
       - name: Deploy to Elastic Beanstalk
         run: |
           aws elasticbeanstalk update-environment \
             --environment-name ${{ env.EB_ENVIRONMENT_NAME }} \
             --version-label v-${{ github.sha }}
-          
-          aws elasticbeanstalk wait application-version-processed \
-                --application-name ${{ env.EB_APPLICATION_NAME }} \
-                --version-label v-${{ github.sha }}
