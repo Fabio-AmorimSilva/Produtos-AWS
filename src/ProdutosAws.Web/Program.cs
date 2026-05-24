@@ -19,6 +19,15 @@ public class Program
             app.UseExceptionHandler("/Home/Error");
             app.UseHsts();
         }
+        
+        if (app.Environment.IsProduction())
+        {
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<ProductsAwsDbContext>();
+                db.Database.Migrate();
+            }
+        }
 
         app.UseHttpsRedirection();
         app.UseRouting();
