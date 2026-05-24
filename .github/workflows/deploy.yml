@@ -95,32 +95,32 @@ jobs:
             --source-bundle S3Bucket="${{ env.S3_BUCKET_DEPLOY }}",S3Key="deploy-${{ github.sha }}.zip" \
             --process
 
-            - name: Wait for application version to be processed
-              run: |
-                VERSION="v-${{ github.sha }}"
-                
-                echo "Waiting for version $VERSION to become PROCESSED..."
-                
-                for i in {1..30}
-                do
-                  STATUS=$(aws elasticbeanstalk describe-application-versions \
-                    --application-name "${{ env.EB_APPLICATION_NAME }}" \
-                    --version-labels "$VERSION" \
-                    --query "ApplicationVersions[0].Status" \
-                    --output text)
-                
-                  echo "Current status: $STATUS"
-                
-                  if [ "$STATUS" = "PROCESSED" ]; then
-                    echo "Application version processed successfully."
-                    exit 0
-                  fi
-                
-                  sleep 10
-                done
-                
-                echo "Timeout waiting for application version processing."
-                exit 1
+      - name: Wait for application version to be processed
+          run: |
+            VERSION="v-${{ github.sha }}"
+            
+            echo "Waiting for version $VERSION to become PROCESSED..."
+            
+            for i in {1..30}
+            do
+              STATUS=$(aws elasticbeanstalk describe-application-versions \
+                --application-name "${{ env.EB_APPLICATION_NAME }}" \
+                --version-labels "$VERSION" \
+                --query "ApplicationVersions[0].Status" \
+                --output text)
+            
+              echo "Current status: $STATUS"
+            
+              if [ "$STATUS" = "PROCESSED" ]; then
+                echo "Application version processed successfully."
+                exit 0
+              fi
+            
+              sleep 10
+            done
+            
+            echo "Timeout waiting for application version processing."
+            exit 1
 
       - name: Deploy to Elastic Beanstalk
         run: |
