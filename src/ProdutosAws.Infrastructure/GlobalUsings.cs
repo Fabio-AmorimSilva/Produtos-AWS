@@ -1,6 +1,5 @@
-﻿// Global using directives
-
-global using System.Reflection;
+﻿global using System.Reflection;
+global using Amazon;
 global using Amazon.S3;
 global using Amazon.S3.Model;
 global using Microsoft.EntityFrameworkCore;
