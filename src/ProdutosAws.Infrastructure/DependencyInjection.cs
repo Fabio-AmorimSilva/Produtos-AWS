@@ -26,9 +26,13 @@ public static class DependencyInjection
 
         private IServiceCollection AddAwsS3(IConfiguration configuration)
         {
-            services.Configure<AwsSettings>(configuration.GetSection("AWS"));
+            var awsSettings = configuration.GetSection("AWS").Get<AwsSettings>();
             
-            var region = RegionEndpoint.GetBySystemName(configuration["AWS:Region"]);
+            var region = RegionEndpoint.GetBySystemName(awsSettings!.Region);
+            
+            Console.WriteLine(
+                $"AWS Region = {configuration["AWS:Region"]}"
+            );
 
             services.AddSingleton<IAmazonS3>(new AmazonS3Client(region));
             services.AddScoped<IFileStorageService, AwsS3StorageService>();
