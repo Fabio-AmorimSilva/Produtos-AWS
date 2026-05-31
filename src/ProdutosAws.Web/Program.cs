@@ -22,29 +22,41 @@ public class Program
 
         if (app.Environment.IsProduction())
         {
-            using (var scope = app.Services.CreateScope())
+            try
             {
-                var db = scope.ServiceProvider.GetRequiredService<ProductsAwsDbContext>();
+                using var scope = app.Services.CreateScope();
+
+                var db = scope.ServiceProvider
+                    .GetRequiredService<ProductsAwsDbContext>();
+
+                Console.WriteLine("Iniciando migration...");
+
                 db.Database.Migrate();
+
+                Console.WriteLine("Migration concluída.");
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
+
+            app.MapGet("health", () => "OK");
+
+            app.UseHttpsRedirection();
+
+            app.UseRouting();
+
+            app.UseAuthorization();
+
+            app.MapStaticAssets();
+
+            app.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{id?}")
+                .WithStaticAssets();
+
+            app.Run();
         }
-
-        app.MapGet("health", () => "OK");
-        
-        app.UseHttpsRedirection();
-        
-        app.UseRouting();
-
-        app.UseAuthorization();
-
-        app.MapStaticAssets();
-        
-        app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}")
-            .WithStaticAssets();
-
-        
-        app.Run();
     }
 }
