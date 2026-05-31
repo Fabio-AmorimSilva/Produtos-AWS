@@ -5,11 +5,11 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        
+
         builder.Services
             .AddApplication()
             .AddInfrastructure(builder.Configuration);
-        
+
         builder.Services.AddControllersWithViews();
 
         var app = builder.Build();
@@ -20,43 +20,45 @@ public class Program
             app.UseHsts();
         }
 
-        // if (app.Environment.IsProduction())
-        // {
-        //     try
-        //     {
-        //         using var scope = app.Services.CreateScope();
-        //
-        //         var db = scope.ServiceProvider
-        //             .GetRequiredService<ProductsAwsDbContext>();
-        //
-        //         Console.WriteLine("Iniciando migration...");
-        //
-        //         db.Database.Migrate();
-        //
-        //         Console.WriteLine("Migration concluída.");
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         Console.WriteLine(ex.ToString());
-        //         throw;
-        //     }
-        // }
+        if (app.Environment.IsProduction())
+        {
+            try
+            {
+                using var scope = app.Services.CreateScope();
 
-            app.MapGet("health", () => "OK");
+                var db = scope.ServiceProvider
+                    .GetRequiredService<ProductsAwsDbContext>();
 
-            app.UseHttpsRedirection();
+                Console.WriteLine("Iniciando migration...");
 
-            app.UseRouting();
+                db.Database.Migrate();
 
-            app.UseAuthorization();
-
-            app.MapStaticAssets();
-
-            app.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}")
-                .WithStaticAssets();
-
-            app.Run();
+                Console.WriteLine("Migration concluída.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
         }
+
+        app.MapGet("health", () => "OK");
+
+        app.UseHttpsRedirection();
+        
+        app.UseStaticFiles();
+
+        app.UseRouting();
+
+        app.UseAuthorization();
+
+        app.MapStaticAssets();
+
+        app.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}")
+            .WithStaticAssets();
+
+        app.Run();
+    }
 }
