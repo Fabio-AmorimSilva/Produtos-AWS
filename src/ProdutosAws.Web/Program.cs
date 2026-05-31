@@ -20,26 +20,27 @@ public class Program
             app.UseHsts();
         }
 
-        if (app.Environment.IsProduction())
-        {
-            try
-            {
-                using var scope = app.Services.CreateScope();
-
-                var db = scope.ServiceProvider
-                    .GetRequiredService<ProductsAwsDbContext>();
-
-                Console.WriteLine("Iniciando migration...");
-
-                db.Database.Migrate();
-
-                Console.WriteLine("Migration concluída.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                throw;
-            }
+        // if (app.Environment.IsProduction())
+        // {
+        //     try
+        //     {
+        //         using var scope = app.Services.CreateScope();
+        //
+        //         var db = scope.ServiceProvider
+        //             .GetRequiredService<ProductsAwsDbContext>();
+        //
+        //         Console.WriteLine("Iniciando migration...");
+        //
+        //         db.Database.Migrate();
+        //
+        //         Console.WriteLine("Migration concluída.");
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Console.WriteLine(ex.ToString());
+        //         throw;
+        //     }
+        // }
 
             app.MapGet("health", () => "OK");
 
@@ -58,5 +59,4 @@ public class Program
 
             app.Run();
         }
-    }
 }
