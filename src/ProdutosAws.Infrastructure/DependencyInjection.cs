@@ -45,8 +45,8 @@ public static class DependencyInjection
             
             var region = RegionEndpoint.GetBySystemName(regionName);
 
-            services.AddSingleton<IAmazonS3>(
-                new AmazonS3Client(region)
+            services.AddSingleton<IAmazonSecretsManager>(
+                new AmazonSecretsManagerClient(region)
             );
 
             services.AddScoped<IFileStorageService, AwsS3StorageService>();
