@@ -12,5 +12,4 @@ global using Microsoft.Extensions.Options;
 global using ProdutosAws.Application.Interfaces;
 global using ProdutosAws.Domain.Entities;
 global using ProdutosAws.Infrastructure;
-global using ProdutosAws.Infrastructure.Secrets;
 global using ProdutosAws.Infrastructure.Storage;
