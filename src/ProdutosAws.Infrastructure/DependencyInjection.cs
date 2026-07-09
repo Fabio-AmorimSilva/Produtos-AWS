@@ -17,39 +17,47 @@ public static class DependencyInjection
         {
             try
             {
-                using var client = new AmazonSecretsManagerClient();
+                Console.WriteLine("Criando cliente Secrets Manager...");
 
-                var response = client.GetSecretValueAsync(
-                        new GetSecretValueRequest
-                        {
-                            SecretId = "ProdutosAws/Database"
-                        })
+                using var client = new AmazonSecretsManagerClient(RegionEndpoint.SAEast1);
+
+                Console.WriteLine("Buscando secret...");
+
+                var response = client
+                    .GetSecretValueAsync(new GetSecretValueRequest
+                    {
+                        SecretId = "ProdutosAws/Database"
+                    })
                     .GetAwaiter()
                     .GetResult();
 
-                Console.WriteLine("Secret carregado com sucesso.");
+                Console.WriteLine("Secret recuperado.");
+
+                Console.WriteLine(response.SecretString);
 
                 var secrets = JsonDocument.Parse(response.SecretString);
+
+                Console.WriteLine("JSON convertido.");
 
                 var connectionString = secrets.RootElement
                     .GetProperty("ConnectionString")
                     .GetString();
 
-                Console.WriteLine("Connection string obtida.");
+                Console.WriteLine("ConnectionString encontrada.");
 
                 services.AddDbContext<ProductsAwsDbContext>(options =>
                     options.UseSqlServer(connectionString));
+
+                return services;
             }
             catch (Exception ex)
             {
-                Console.WriteLine("ERRO AO LER SECRET:");
-                Console.WriteLine(ex);
+                Console.WriteLine("======================================");
+                Console.WriteLine(ex.ToString());
+                Console.WriteLine("======================================");
+
                 throw;
             }
-
-            services.AddScoped<IProductAwsDbContext>(provider => provider.GetRequiredService<ProductsAwsDbContext>());
-
-            return services;
         }
 
         private IServiceCollection AddAwsS3(IConfiguration configuration)
