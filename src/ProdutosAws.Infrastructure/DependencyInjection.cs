@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Extensions.DependencyInjection;
+namespace Microsoft.Extensions.DependencyInjection;
 
 public static class DependencyInjection
 {
@@ -6,77 +6,68 @@ public static class DependencyInjection
     {
         public IServiceCollection AddInfrastructure(IConfiguration configuration)
         {
-            services
-                .AddAwsS3(configuration)
-                .AddDbContext(configuration);
+            var region = RegionEndpoint.GetBySystemName(configuration["AWS:Region"]);
+
+            ConfigureAws(services, configuration, region);
+            ConfigureDbContext(services, region);
 
             return services;
         }
+    }
 
-        private IServiceCollection AddDbContext(IConfiguration configuration)
+    private static void ConfigureAws(IServiceCollection services, IConfiguration configuration, RegionEndpoint region)
+    {
+        services.Configure<AwsSettings>(configuration.GetSection("AWS"));
+        services.AddSingleton<IAmazonS3>(_ => new AmazonS3Client(region));
+        services.AddSingleton<IAmazonSecretsManager>(_ => new AmazonSecretsManagerClient(region));
+    }
+
+    private static void ConfigureDbContext(IServiceCollection services, RegionEndpoint region)
+    {
+        string connectionString;
+
+        try
         {
-            try
-            {
-                Console.WriteLine("Criando cliente Secrets Manager...");
+            Console.WriteLine("Obtendo Connection String do Secrets Manager...");
 
-                using var client = new AmazonSecretsManagerClient(RegionEndpoint.SAEast1);
+            using var client = new AmazonSecretsManagerClient(region);
 
-                Console.WriteLine("Buscando secret...");
+            var response = client.GetSecretValueAsync(
+                new GetSecretValueRequest { SecretId = "ProdutosAws/Database" }
+            ).GetAwaiter().GetResult();
 
-                var response = client
-                    .GetSecretValueAsync(new GetSecretValueRequest
-                    {
-                        SecretId = "ProdutosAws/Database"
-                    })
-                    .GetAwaiter()
-                    .GetResult();
+            Console.WriteLine("Secret obtido.");
 
-                Console.WriteLine("Secret recuperado.");
+            using var json = JsonDocument.Parse(response.SecretString);
 
-                Console.WriteLine(response.SecretString);
+            connectionString = json.RootElement
+                                   .GetProperty("ConnectionString")
+                                   .GetString()
+                               ?? throw new InvalidOperationException(
+                                   "ConnectionString não encontrada no Secret.");
 
-                var secrets = JsonDocument.Parse(response.SecretString);
-
-                Console.WriteLine("JSON convertido.");
-
-                var connectionString = secrets.RootElement
-                    .GetProperty("ConnectionString")
-                    .GetString();
-
-                Console.WriteLine("ConnectionString encontrada.");
-
-                services.AddDbContext<ProductsAwsDbContext>(options =>
-                    options.UseSqlServer(connectionString));
-
-                return services;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("======================================");
-                Console.WriteLine(ex.ToString());
-                Console.WriteLine("======================================");
-
-                throw;
-            }
+            Console.WriteLine("Connection String carregada.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Erro ao obter Secret:");
+            Console.WriteLine(ex);
+            throw;
         }
 
-        private IServiceCollection AddAwsS3(IConfiguration configuration)
+        services.AddDbContext<ProductsAwsDbContext>(options =>
         {
-            services.Configure<AwsSettings>(
-                configuration.GetSection("AWS")
-            );
+            options.UseSqlServer(connectionString, sql =>
+            {
+                sql.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
+                    errorNumbersToAdd: null
+                );
+            });
+        });
 
-            var regionName = configuration["AWS:Region"];
-            
-            var region = RegionEndpoint.GetBySystemName(regionName);
-
-            services.AddSingleton<IAmazonSecretsManager>(
-                new AmazonSecretsManagerClient(region)
-            );
-
-            services.AddScoped<IFileStorageService, AwsS3StorageService>();
-
-            return services;
-        }
+        services.AddScoped<IProductAwsDbContext>(provider => provider.GetRequiredService<ProductsAwsDbContext>());
+        services.AddScoped<IFileStorageService, AwsS3StorageService>();
     }
 }
