@@ -15,20 +15,37 @@ public static class DependencyInjection
 
         private IServiceCollection AddDbContext(IConfiguration configuration)
         {
-            using var client = new AmazonSecretsManagerClient();
+            try
+            {
+                using var client = new AmazonSecretsManagerClient();
 
-            var response = client
-                .GetSecretValueAsync(new GetSecretValueRequest { SecretId = "ProdutosAws/Database" })
-                .GetAwaiter()
-                .GetResult();
+                var response = client.GetSecretValueAsync(
+                        new GetSecretValueRequest
+                        {
+                            SecretId = "ProdutosAws/Database"
+                        })
+                    .GetAwaiter()
+                    .GetResult();
 
-            var secrets = JsonDocument.Parse(response.SecretString);
+                Console.WriteLine("Secret carregado com sucesso.");
 
-            var connectionString = secrets.RootElement.GetProperty("ConnectionString").GetString();
+                var secrets = JsonDocument.Parse(response.SecretString);
 
-            services.AddDbContext<ProductsAwsDbContext>(options =>
-                options.UseSqlServer(connectionString)
-            );
+                var connectionString = secrets.RootElement
+                    .GetProperty("ConnectionString")
+                    .GetString();
+
+                Console.WriteLine("Connection string obtida.");
+
+                services.AddDbContext<ProductsAwsDbContext>(options =>
+                    options.UseSqlServer(connectionString));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ERRO AO LER SECRET:");
+                Console.WriteLine(ex);
+                throw;
+            }
 
             services.AddScoped<IProductAwsDbContext>(provider => provider.GetRequiredService<ProductsAwsDbContext>());
 
