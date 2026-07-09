@@ -1,7 +1,10 @@
 ﻿global using System.Reflection;
+global using System.Text.Json;
 global using Amazon;
 global using Amazon.S3;
 global using Amazon.S3.Model;
+global using Amazon.SecretsManager;
+global using Amazon.SecretsManager.Model;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.EntityFrameworkCore.Metadata.Builders;
 global using Microsoft.Extensions.Configuration;
@@ -9,4 +12,5 @@ global using Microsoft.Extensions.Options;
 global using ProdutosAws.Application.Interfaces;
 global using ProdutosAws.Domain.Entities;
 global using ProdutosAws.Infrastructure;
+global using ProdutosAws.Infrastructure.Secrets;
 global using ProdutosAws.Infrastructure.Storage;

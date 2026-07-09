@@ -15,8 +15,19 @@ public static class DependencyInjection
 
         private IServiceCollection AddDbContext(IConfiguration configuration)
         {
+            using var client = new AmazonSecretsManagerClient();
+
+            var response = client
+                .GetSecretValueAsync(new GetSecretValueRequest { SecretId = "ProdutosAws/Database" })
+                .GetAwaiter()
+                .GetResult();
+
+            var secrets = JsonDocument.Parse(response.SecretString);
+
+            var connectionString = secrets.RootElement.GetProperty("ConnectionString").GetString();
+
             services.AddDbContext<ProductsAwsDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"))
+                options.UseSqlServer(connectionString)
             );
 
             services.AddScoped<IProductAwsDbContext>(provider => provider.GetRequiredService<ProductsAwsDbContext>());
@@ -26,23 +37,12 @@ public static class DependencyInjection
 
         private IServiceCollection AddAwsS3(IConfiguration configuration)
         {
-            Console.WriteLine("===== AWS CONFIG =====");
-
-            Console.WriteLine($"AWS:Region = {configuration["AWS:Region"]}");
-            Console.WriteLine($"AWS__Region = {configuration["AWS__Region"]}");
-
-            Console.WriteLine($"AWS:BucketName = {configuration["AWS:BucketName"]}");
-            Console.WriteLine($"AWS__BucketName = {configuration["AWS__BucketName"]}");
-
             services.Configure<AwsSettings>(
                 configuration.GetSection("AWS")
             );
 
             var regionName = configuration["AWS:Region"];
-
-            if (string.IsNullOrWhiteSpace(regionName))
-                throw new Exception("AWS:Region não encontrada.");
-
+            
             var region = RegionEndpoint.GetBySystemName(regionName);
 
             services.AddSingleton<IAmazonS3>(
